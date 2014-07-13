@@ -1,0 +1,44 @@
+path = "household_power_consumption.txt"
+#load the data as all characters... I'll convert to correct types later with explicit conversions
+data = read.csv(path, header = TRUE, sep = ";", colClasses = c("character", "character", "character", "character", "character", "character", "character", "character", "character"), col.names = c("Date", "Time", "GlobalActivePower", "GlobalReactivePower", "Voltage", "GlobalIntensity", "SubMetering1", "SubMetering2", "SubMetering3"))
+
+#Combine the Date and Time columns to one DateTime column of type (POSIXlt)
+data$Date = strptime(paste(data$Date, data$Time, sep=" "), format="%d/%m/%Y %H:%M:%S")
+colnames(data)[colnames(data) == "Date"] = "DateTime"
+data$Time = NULL
+
+#reduce the dataset to only the days in question
+data = data[(data$DateTime >= strptime("2007-02-01 00:00:00", format="%Y-%m-%d %H:%M:%S")) & (data$DateTime < strptime("2007-02-03 00:00:00", format="%Y-%m-%d %H:%M:%S")),]
+
+#Convert the remaining columns to Numeric
+data$GlobalActivePower = type.convert(data$GlobalActivePower, na.strings = "?", dec = ".", as.is = TRUE)
+data$GlobalReactivePower = type.convert(data$GlobalReactivePower, na.strings = "?", dec = ".", as.is = TRUE)
+data$Voltage = type.convert(data$Voltage, na.strings = "?", dec = ".", as.is = TRUE)
+data$GlobalIntensity = type.convert(data$GlobalIntensity, na.strings = "?", dec = ".", as.is = TRUE)
+data$SubMetering1 = type.convert(data$SubMetering1, na.strings = "?", dec = ".", as.is = TRUE)
+data$SubMetering2 = type.convert(data$SubMetering2, na.strings = "?", dec = ".", as.is = TRUE)
+data$SubMetering3 = type.convert(data$SubMetering3, na.strings = "?", dec = ".", as.is = TRUE)
+
+#Open the PNG device
+png(filename="plot4.png", width = 480, height = 480, units = "px", bg="transparent")
+
+#Make the Plot
+par(mfrow = c(2,2))
+#4.1
+plot(data$DateTime, data$GlobalActivePower, type="n", xlab = "", ylab = "Global Active Power")
+lines(data$DateTime, data$GlobalActivePower)
+#4.2
+plot(data$DateTime, data$Voltage, type="n", xlab = "datetime", ylab = "Voltage")
+lines(data$DateTime, data$Voltage)
+#4.3
+plot(data$DateTime, data$SubMetering1, type="n", xlab = "", ylab = "Energy sub metering")
+lines(data$DateTime, data$SubMetering1, col="black")
+lines(data$DateTime, data$SubMetering2, col="red")
+lines(data$DateTime, data$SubMetering3, col="blue")
+legend("topright", lty=1, col = c("black", "orange", "blue"), cex = .9, bty = "n", legend = c("Sub_metering_1", "Sub_metering_2", "Sub_metering_3"))
+#4.4
+plot(data$DateTime, data$GlobalReactivePower, type="n", xlab = "datetime", ylab = "Global_reactive_power")
+lines(data$DateTime, data$GlobalReactivePower)
+
+#Close the PNG device
+dev.off()
